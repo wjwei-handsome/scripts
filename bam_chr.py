@@ -1,8 +1,11 @@
 import argparse
+import gzip
 import sys
+
 import pysam
-from tqdm import tqdm
 from rich.progress import track
+from tqdm import tqdm
+
 
 def get_args():
     # define arguments
@@ -58,9 +61,9 @@ def filter_bam(bamfile_path: str, outbamfile_path: str, size: int=10000000):
     bamfile.close()
 
 def filter_paf(paffile_path: str, outpaffile_path: str, file_lines: int, size: int=10000000):
-    paffile = open(paffile_path, 'r')
+    paffile = gzip.open(paffile_path, 'rt')
     outpaffile = open(outpaffile_path, 'w')
-    file_lines = file_lines if file_lines else sum(1 for line in open(paffile_path))
+    file_lines = file_lines if file_lines else sum(1 for line in gzip.open(paffile_path,'rt'))
     for line in track(paffile, total=file_lines):
         line = line.strip()
         ref_chro = line.split("\t")[5]
