@@ -104,12 +104,12 @@ with open(bed_path) as bed_file:
             continue
         ref = line.split("\t")[0]
         ref_start = int(line.split("\t")[1])
-        ref_coord = Coord(ref, ref_start-1, int(line.split("\t")[2]), line.split("\t")[5])
+        ref_coord = Coord(ref, ref_start-1-1, int(line.split("\t")[2])-1, line.split("\t")[5])
         query_coord_str = line.split("\t")[9]
         query_coord = Coord(
             query_coord_str.split(":")[0],
-            int(query_coord_str.split(":")[1].split('-')[0])-1,
-            int(query_coord_str.split(":")[1].split('-')[1]),
+            int(query_coord_str.split(":")[1].split('-')[0])-1-1,
+            int(query_coord_str.split(":")[1].split('-')[1])-1,
             query_coord_str.split(":")[2],
             )
         ref_query_bed = RefQueryBed(ref_coord, query_coord)
@@ -191,12 +191,12 @@ with console.status("[bold green]Exract seq using seqkit...") as status:
     if sig != 0:
         logging.error("seqkit subseq error with ref")
         sys.exit(1)
-    os.system(f"rm -f {ref_bed_file_path}")
+    # os.system(f"rm -f {ref_bed_file_path}")
     sig2 = os.system(f"seqkit subseq --bed {query_bed_file_path} {args.query_fa_path} | seqkit fx2tab -i > {query_bed_seq_path}")
     if sig2 != 0:
         logging.error("seqkit subseq error with query")
         sys.exit(1)
-    os.system(f"rm -f {query_bed_file_path}")
+    # os.system(f"rm -f {query_bed_file_path}")
 
 logging.info('Done with hashed_fa_bed')
 
@@ -220,39 +220,8 @@ def get_hash_fa(seq_path, total, mode):
                 _hash_fa[tmp_coord] = line.split('\t')[1]
             except IndexError:
                 print(line.split('\t')[0])
-        os.system(f"rm -f {seq_path}")
+        # os.system(f"rm -f {seq_path}")
     return _hash_fa
-
-# with open(ref_bed_seq_path) as f:
-#     ref_hash_fa = {}
-#     for line in track(f, total=ref_bed_total, description='Reading ref sequences'):
-#         line=line.strip()
-#         bed_string = line.split('\t')[0]
-#         chro = bed_string.split('_')[0]
-#         start = int(bed_string.split('_')[1].split('-')[0])-1
-#         end = int(bed_string.split('_')[1].split('-')[1].split(':')[0])
-#         strand = bed_string.split('_')[1].split('-')[1].split(':')[1]
-#         tmp_coord = ";".join([chro,str(start),str(end),'J','N',strand])
-#         ref_hash_fa[tmp_coord] = line.split('\t')[1]
-#     os.system(f"rm -f {ref_bed_seq_path}")
-
-# with open(query_bed_seq_path) as f:
-#     query_hash_fa = {}
-#     for line in track(f, total=query_bed_total, description='Reading query suquences'):
-#         line=line.strip()
-#         bed_string = line.split('\t')[0]
-#         chro = bed_string.split('_')[0]
-#         start = int(bed_string.split('_')[1].split('-')[0])-1
-#         end = int(bed_string.split('_')[1].split('-')[1].split(':')[0])
-#         strand = bed_string.split('_')[1].split('-')[1].split(':')[1]
-#         tmp_coord = ";".join([chro,str(start),str(end),'J','N',strand])
-#         query_hash_fa[tmp_coord] = line.split('\t')[1]
-
-# with console.status("[bold green]format scfd...") as status:
-#     os.system(f"sed -i s/scfd_/scfd/g {ref_bed_seq_path}")
-#     os.system(f"sed -i s/scfd_/scfd/g {query_bed_seq_path}")
-#     os.system(f"sed -i s/scfd_/scfd/g {query_bed_file_path}")
-#     os.system(f"sed -i s/scfd_/scfd/g {bedstring_vcf_out_path}")
 
 
 ref_hash_fa = get_hash_fa(ref_bed_seq_path, ref_bed_total, 'ref')
@@ -264,6 +233,7 @@ final_vcf_path = args.out+'_seq.vcf'
 vcf_out2 = VariantFile(final_vcf_path, 'w', header=vcf_in2.header)
 
 for rec in track(vcf_in2.fetch(), total=(ref_bed_total+query_bed_total)/2):
+    rec.start = rec.start-1
     hased_ref_coord = rec.ref
     hased_query_coord = rec.alts[0]
     ref_seq = ref_hash_fa[hased_ref_coord]
@@ -273,5 +243,5 @@ for rec in track(vcf_in2.fetch(), total=(ref_bed_total+query_bed_total)/2):
     vcf_out2.write(rec)
 
 vcf_in2.close()
-os.system(f"rm -f {bedstring_vcf_out_path}")
+# os.system(f"rm -f {bedstring_vcf_out_path}")
 vcf_out2.close()
