@@ -55,6 +55,9 @@ def get_args():
     optional_parser = parser.add_argument_group('optional arguments')
     optional_parser.add_argument('-k', '--keep', action='store_true', dest='keep', help='if keep middle file',
                                  default=False)
+    optional_parser.add_argument('-l', '--leftshift', action='store_true', dest='leftshift', help='if alignt by minimap',
+                                 default=False)
+
 
 
     return parser.parse_args()
@@ -70,6 +73,11 @@ class Coord:
     def __repr__(self) -> str:
         return "@".join([self.chro, self.start, self.end, 'J', 'N',self.strand])
         # return f"{self.chro}@{self.start}@{self.end}@J@N@{self.strand}"
+
+
+    def left_shift(self):
+        self.start = str(int(self.start) - 1)
+        self.end = str(int(self.end) - 1)
 
 @dataclass
 class RefQueryBed:
@@ -141,7 +149,7 @@ def fix_input_vcf_header(VariantFile):
         _.append(rec)
     return _
 
-def write_bed_vcf(outprefix, input_vcf_records,bed_coord_dict, ):
+def write_bed_vcf(outprefix, input_vcf_records,bed_coord_dict, leftshift: bool=False):
 
     bedstring_vcf_out_path = outprefix+'_bedstring.vcf'
     vcf_out = VariantFile(bedstring_vcf_out_path, 'w', header=vcf_in.header)
@@ -174,6 +182,9 @@ def write_bed_vcf(outprefix, input_vcf_records,bed_coord_dict, ):
         # else:
         ref_bed = ref_query_bed.ref_coord
         query_bed = ref_query_bed.query_coord
+        if leftshift:
+            ref_bed.left_shift()
+            query_bed.left_shift()
         ref = str(ref_bed)
         ref_bed_file.write(ref.replace('@','\t')+'\n')
 
@@ -241,7 +252,7 @@ def get_hash_fa(seq_path, total, mode, rm_flag=True):
 
 
 
-def write_seq_vcf(outprefix,ref_hash_fa, query_hash_fa, ref_bed_total, query_bed_total, rm_flag=True):
+def write_seq_vcf(outprefix,ref_hash_fa, query_hash_fa, ref_bed_total, query_bed_total, rm_flag=True, leftshift=False):
 
     vcf_in2 = VariantFile(outprefix+'_bedstring.vcf')
     final_vcf_path = outprefix+'_seq.vcf'
@@ -254,6 +265,8 @@ def write_seq_vcf(outprefix,ref_hash_fa, query_hash_fa, ref_bed_total, query_bed
         # query_seq = query_hash_fa.get(hased_query_coord, 'N')
         query_seq = query_hash_fa[hased_query_coord]
         rec.alleles = (ref_seq, query_seq)
+        if leftshift:
+            rec.start = rec.start - 1
         vcf_out2.write(rec)
 
     vcf_in2.close()
@@ -264,13 +277,16 @@ def write_seq_vcf(outprefix,ref_hash_fa, query_hash_fa, ref_bed_total, query_bed
 
 if __name__ == '__main__':
     args = get_args()
+    if_keep = args.keep
+    print(if_keep)
+    leftshift = args.leftshift
+    print(leftshift)
     bed_coord_dict = get_bed_coord_dict(args.bed)
     vcf_in = VariantFile(args.vcf, 'r')  # auto-detect input format
     vcf_records = fix_input_vcf_header(vcf_in)
     outprefix = args.out
-    if_keep = args.keep
-    ref_bed_file_path, query_bed_file_path, ref_bed_total, query_bed_total = write_bed_vcf(outprefix, vcf_records, bed_coord_dict, )
+    ref_bed_file_path, query_bed_file_path, ref_bed_total, query_bed_total = write_bed_vcf(outprefix, vcf_records, bed_coord_dict, leftshift)
     ref_bed_seq_path, query_bed_seq_path = get_seq_tab(outprefix, ref_bed_file_path, query_bed_file_path, args.ref_fa_path, args.query_fa_path,rm_flag=if_keep)
     ref_hash_fa = get_hash_fa(ref_bed_seq_path, ref_bed_total, 'ref', rm_flag=if_keep)
     query_hash_fa = get_hash_fa(query_bed_seq_path, query_bed_total, 'query', rm_flag=if_keep)
-    write_seq_vcf(outprefix, ref_hash_fa, query_hash_fa, ref_bed_total, query_bed_total, rm_flag=if_keep)
+    write_seq_vcf(outprefix, ref_hash_fa, query_hash_fa, ref_bed_total, query_bed_total, rm_flag=if_keep,leftshift=leftshift)
