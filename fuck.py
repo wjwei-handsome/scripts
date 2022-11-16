@@ -99,3 +99,53 @@ def editDistanceSimilarity(seq1, seq2):
 def HammingDistanceSimilarity(seq1, seq2):
     distance = len([1 for c1, c2 in zip(seq1, seq2) if c1 == c2])
     return 1.0 * distance / len(seq1)
+
+from itertools import groupby
+
+def cigarCategory(alignmentColumn):
+    x, y = alignmentColumn
+    if x == "-":
+        if y == "-":
+            return "P"
+        else:
+            return "I"
+    else:
+        if y == "-":
+            return "D"
+        elif x != y:
+            return "X"
+        else:
+            return "M"
+
+def cigarParts(beg, alignmentColumns, end):
+    if beg:
+        yield str(beg) + "H"
+    # (doesn't handle translated alignments)
+    for k, v in groupby(alignmentColumns, cigarCategory):
+        yield str(sum(1 for _ in v)) + k
+    if end:
+        yield str(end) + "H"
+
+def get_cigar(m1, m2):
+    # qRevStart = m2.sequence_size - m2.alignment_start - m2.alignment_size
+    cigar = "".join(cigarParts(0, zip(m1, m2), 0))
+    return cigar
+
+from itertools import combinations
+from operator import mul
+from functools import reduce
+import random
+
+def get_random_01_list(k: int) -> list:
+    """
+    Get a random list of 0 and 1
+    """
+    return [random.randint(0, 1) for _ in range(k)]
+
+test_data = {i:get_random_01_list(5) for i in range(1,10)}
+
+for i in combinations(test_data.keys(), 3):
+    a=test_data[i[0]]
+    b=test_data[i[1]]
+    c=test_data[i[2]]
+    print(f"{i}:{reduce(mul,a)}\t{reduce(mul,b)}\t{reduce(mul,c)}")

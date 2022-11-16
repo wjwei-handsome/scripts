@@ -83,8 +83,8 @@ def cigarCategory(alignmentColumn):
     else:
         if y == "-":
             return "D"
-        elif x != y:
-            return "X"
+        # elif x != y:
+        #     return "M" ## X-->M
         else:
             return "M"
 
@@ -215,7 +215,7 @@ class MAF:
 
                     fin_total += 1
 
-                    if len(line.strip()) == 0:
+                    if len(line.strip()) == 0 or line.startswith("#"):
                         top = True
                         continue
 
@@ -233,7 +233,7 @@ class MAF:
         with open(self.filename, "r") as fin:
             for line in track(fin, description="[bold green]Converting maf to sam...", total=fin_total):
                 # skipping empty lines
-                if line.strip() == "":
+                if line.strip() == "" or line.startswith("#"):
                     continue
 
                 if line[0] == "a":
@@ -818,7 +818,7 @@ if __name__ == "__main__":
     cl = pg + ' ' + ' '.join(f'--{k} {v}' for k, v in vars(args).items())
     output_sam = args.out + ".sam"  ## unsorted
     Header = Header(pg, "0.1", cl)
-    prefix = Prefix(args.prefix[0], args.prefix[1])
+    prefix = Prefix(args.prefix[0], args.prefix[1]) if args.prefix else Prefix(None, None)
     maf = MAF(filename=args.maf, outfile=output_sam, header=Header, prefix=prefix)
     line_total = maf.to_sam()
     output_paf = args.out + ".paf" ## unsorted
