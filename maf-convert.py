@@ -671,7 +671,7 @@ class Alignment:
         self._parse_cigar()
 
         if self.strand == "-":
-            self.parsed_cigar = self.parsed_cigar[::-1]
+            # self.parsed_cigar = self.parsed_cigar[::-1]
             self.q_start, self.q_end = self.q_end, self.q_start
 
     def _parse_cigar(self):
