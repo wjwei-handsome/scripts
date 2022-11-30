@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+# -*- encoding: utf-8 -*-
+'''
+@文件        :paf2delta.py
+@说明        :
+@时间        :2022/11/17 17:27:52
+@作者        :wjwei
+@版本        :0.01
+@邮箱        :wjwei9908@gmail.com
+'''
+
+
 import gzip
 import argparse
 from collections import defaultdict
@@ -33,7 +45,7 @@ class Alignment:
         self._parse_cigar()
 
         if self.strand == "-":
-            self.parsed_cigar = self.parsed_cigar[::-1]
+            # self.parsed_cigar = self.parsed_cigar[::-1]
             self.q_start, self.q_end = self.q_end, self.q_start
 
     def _parse_cigar(self):
@@ -171,4 +183,8 @@ class PAF2DELTA:
             alns[r_header][q_header].append(x)
         f.close()
         with console.status("[bold green]Writing delta...") as status:
-            write_delta(alns, r_chr_lens, q_chr_lens, paf_file + '.delta')
+            write_delta(alns, r_chr_lens, q_chr_lens, self.outfile)
+
+import sys
+paf2delta = PAF2DELTA(sys.argv[1], sys.argv[2], 1)
+paf2delta.convert()

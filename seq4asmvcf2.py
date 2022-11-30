@@ -232,7 +232,7 @@ def get_hash_fa(seq_path, total, mode, rm_flag=True):
             try:
                 line=line.strip()
                 bed_string = line.split('\t')[0]
-                if 'unk' in bed_string or 'scaf' in bed_string: # TODO: 这里可以改成正则表达式
+                if 'unk' in bed_string or 'scaf' in bed_string or 'scfd' in bed_string: # TODO: 这里可以改成正则表达式
                     bed_string = bed_string.replace('_','tmp',1)
                 if 'Unknown' in bed_string:
                     bed_string = bed_string.replace('_','tmp',2)  ##sb
