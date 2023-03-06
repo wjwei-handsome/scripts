@@ -91,6 +91,9 @@ for record in track(REAL_VCF.fetch(), description="get SV info from REAL"):
                 'sv_id': sv_id,
                 'sv_real_gt': sv_gt_fmt,
                 'sv_real_gt_syn': sv_real_gt_syn,
+                'sv_caller_gt': 'None/None',
+                'sv_caller_gt_syn': 'N',
+                'gt_judge': 'NP'
             }
 
 
@@ -102,6 +105,19 @@ for record in track(CALLER_VCF.fetch(), description="get SV info from CALLER"):
     sv_gt = record.samples[SAMPLE_NAME]['GT']
     sv_gt_fmt = "/".join([str(i) for i in sv_gt])
     sv_call_gt_syn = GT_SYNBLOIC[sv_gt_fmt]
+    # if sv_id not in output_infos:
+    #     output_infos[sv_id] = {
+    #         'sv_type': 'NA',
+    #         'sv_len': 'NA',
+    #         'sv_id': sv_id,
+    #         'sv_real_gt': 'None/None',
+    #         'sv_real_gt_syn': 'N',
+    #         'sv_caller_gt': sv_gt_fmt,
+    #         'sv_caller_gt_syn': sv_call_gt_syn,
+    #         'gt_judge': 'NP'
+    #     }
+    #     # output_infos.pop(sv_id)
+    #     continue
     output_infos[sv_id]['sv_caller_gt'] = sv_gt_fmt
     output_infos[sv_id]['sv_caller_gt_syn'] = sv_call_gt_syn
     gt_comapre = output_infos[sv_id]['sv_real_gt'] + '@' + sv_gt_fmt
@@ -112,13 +128,14 @@ for record in track(CALLER_VCF.fetch(), description="get SV info from CALLER"):
 
 # stat_df = pd.DataFrame(output_infos.values())
 
+stat_df = pd.DataFrame(output_infos.values())
+stat_df.to_csv(OUTPUT_TABLE_FILE, sep='\t', index=False)
 
 
-
-with open(OUTPUT_TABLE_FILE, 'w') as f:
-    f.write('sv_type\tsv_len\tsv_id\tsv_real_gt_syn\tsv_caller_gt_syn\tsv_real_gt\tsv_caller_gt\tgt_judge\n')
-    for item in track(output_infos.values(), description="1:output table"):
-        f.write(f'{item["sv_type"]}\t{item["sv_len"]}\t{item["sv_id"]}\t{item["sv_real_gt_syn"]}\t{item["sv_caller_gt_syn"]}\t{item["sv_real_gt"]}\t{item["sv_caller_gt"]}\t{item["gt_judge"]}\n')
+# with open(OUTPUT_TABLE_FILE, 'w') as f:
+#     f.write('sv_type\tsv_len\tsv_id\tsv_real_gt_syn\tsv_caller_gt_syn\tsv_real_gt\tsv_caller_gt\tgt_judge\n')
+#     for item in track(output_infos.values(), description="1:output table"):
+#         f.write(f'{item["sv_type"]}\t{item["sv_len"]}\t{item["sv_id"]}\t{item["sv_real_gt_syn"]}\t{item["sv_caller_gt_syn"]}\t{item["sv_real_gt"]}\t{item["sv_caller_gt"]}\t{item["gt_judge"]}\n')
 
 
 tmp_dict = {
